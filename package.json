@@ -131,6 +131,7 @@
     "test:types:flow": "flow ./__tests__/types/flow",
     "test:utilities": "jest ./src/utilities",
     "release": "node scripts/release.js",
+    "version": "node scripts/replace_version.js",
     "setup": "is-ci || husky install"
   },
   "dependencies": {
