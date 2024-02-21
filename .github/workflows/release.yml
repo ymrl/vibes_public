@@ -10,7 +10,6 @@ on:
 jobs:
   version:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,7 +19,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
           cache: 'npm'
@@ -35,6 +34,22 @@ jobs:
         run: |
           npm version ${{ github.event.inputs.version }}
 
-      - name: Push changes
+      - name: Set version variables
+        id: set_version_variables
         run: |
-          git push --follow-tags
+          echo ::set-output name=NEW_VERSION::$(node -p "require('./package.json').version")
+
+      - name: Push Tag
+        run: |
+          git push --tags
+
+      - name: Crate Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'Bump version to ${{ steps.set_version_variables.outputs.NEW_VERSION }}'
+          title: 'Bump version to ${{ steps.set_version_variables.outputs.NEW_VERSION }}'
+          body: 'Bump version to ${{ steps.set_version_variables.outputs.NEW_VERSION }}'
+          branch: 'bump-version-${{ steps.set_version_variables.outputs.NEW_VERSION }}'
+          base: 'main'
+          draft: false
