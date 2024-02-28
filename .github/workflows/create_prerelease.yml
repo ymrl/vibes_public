@@ -1,0 +1,62 @@
+name: Create Pre-release
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [closed]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: |
+      (github.event.pull_request.merged == true) &&
+      (github.event.pull_request.labels.*.name == 'prerelease')
+
+    # if: |
+    #   (github.repository == 'freee/vibes') &&
+    #   (github.event.pull_request.merged == true) &&
+    #   (github.event.pull_request.labels.*.name == 'prerelease')
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Git Config
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: 'npm'
+
+      - name: Bump version
+        run: |
+          npm version prerelease
+      
+      - name: Set version
+        id: set_version
+        run: |
+          echo "::set-output name=VERSION::$(node -p "require('./package.json').version")"
+          echo "::set-output name=HASH::$(git rev-parse HEAD)"
+
+      - name: Push tag
+        run: |
+          git push --follow-tags
+
+      - name: Create Draft Release
+        uses: actions/create-release@v1
+        with:
+          draft: true
+          tag_name: v${{steps.set_version.outputs.VERSION}}
+          release_name: (Pre-release) v${{steps.set_version.outputs.VERSION}} 🔬
+          commitish: ${{steps.set_version.outputs.HASH}}
+          prerelease: true
+          body: |
+            This is an experimental release.
+
+            ## Changes
+
+            - ${{ github.event.pull_request.title }} @${{ github.event.pull_request.user.login }} (#${{ github.event.pull_request.number }})
+            - and other stuff
