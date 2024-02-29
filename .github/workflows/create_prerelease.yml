@@ -31,6 +31,9 @@ jobs:
           node-version-file: .node-version
           cache: 'npm'
 
+      - name: Install dependencies
+        run: npm install
+
       - name: Bump version
         run: |
           npm version prerelease
