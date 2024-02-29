@@ -10,13 +10,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     if: |
-      (github.event.pull_request.merged == true) &&
-      (github.event.pull_request.labels.*.name == 'prerelease')
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'prerelease')
 
     # if: |
-    #   (github.repository == 'freee/vibes') &&
-    #   (github.event.pull_request.merged == true) &&
-    #   (github.event.pull_request.labels.*.name == 'prerelease')
+    #   (github.repository == 'freee/vibes' &&
+    #   github.event.pull_request.merged == true &&
+    #   contains(github.event.pull_request.labels.*.name, 'prerelease')
     
     steps:
       - uses: actions/checkout@v4
@@ -45,10 +45,9 @@ jobs:
         run: |
           git push --follow-tags
 
-      - name: Create Draft Release
+      - name: Create Release
         uses: actions/create-release@v1
         with:
-          draft: true
           tag_name: v${{steps.set_version.outputs.VERSION}}
           release_name: (Pre-release) v${{steps.set_version.outputs.VERSION}} 🔬
           commitish: ${{steps.set_version.outputs.HASH}}
